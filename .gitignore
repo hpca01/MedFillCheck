@@ -1,0 +1,7 @@
+postgresdb_access.txt
+config.py
+venv/
+migrations/
+.idea/
+__pycache__/
+sqlite.db
