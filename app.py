@@ -8,6 +8,7 @@ from flask_jwt_extended import(
 from flask_migrate import Migrate
 from config import app_config
 from extensions import db, jwt
+import start_script
 
 
 app = Flask(__name__)

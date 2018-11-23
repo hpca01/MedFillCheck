@@ -1,6 +1,8 @@
 from flask_restful import Resource, Api, reqparse
 from models import facilityData
 from flask import Blueprint
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from .users import validate_blacklist
 
 api_bp_facility = Blueprint('facility_api', __name__)
 api = Api(api_bp_facility)
@@ -46,13 +48,14 @@ class Facility(FacilityResource):
             return {
                 "response" : "Please indicate facility name for GET method"
             }, 401
-
         facility = facilityData.query.filter(facilityData.facility_name == facilityname).first()
         if facility is not None:
             return {"facility": facility._asdict()}, 201
         else:
             return {"facility" : "facility not found"},201
 
+    @validate_blacklist
+    @jwt_required
     def put(self, facilityname=None):
         if facilityname is not None:
             return {"response" : "method not allowed"}, 401
@@ -70,6 +73,8 @@ class Facility(FacilityResource):
                 "facility" : "Cannot create facility, it is a duplicate"
             }, 201
 
+    @validate_blacklist
+    @jwt_required
     def delete(self, facilityname=None):
         if facilityname is not None:
             return {"response" : "method not allowed"}, 401
