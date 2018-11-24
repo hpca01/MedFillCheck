@@ -2,6 +2,7 @@ from flask_restful import Resource, Api, reqparse
 from flask import Blueprint, request
 from models import *
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+import functools
 
 api_bp = Blueprint('user_api', __name__)
 api = Api(api_bp)
@@ -11,18 +12,16 @@ def validate_blacklist(func):
     '''
     Validating token before work
     '''
-
-    def wrapper(*args, **kwargs):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
         if 'Authorization' in request.headers:
-            identity = get_jwt_identity()
-            identity_to_check = dict(hash=identity)
-            if BlackListToken.validate_blacklist(hash=identity_to_check):
-                return func(*args, **kwargs)
-            else:
+            identity = request.headers.get('Authorization')
+            if BlackListToken.validate_blacklist(hash=identity) is False:
                 return dict(response=f'Token invalid, need valid token first!'), 200
+            else:
+                return func(self, *args, **kwargs)
         else:
             return dict(response='Authorization Token Needed'), 501
-
     return wrapper
 
 
@@ -149,14 +148,14 @@ class UserAuthLogin(User):
             else:
                 user_dict = dict(usn=user.name, type=user.type)
                 token = create_access_token(identity=user_dict)
-                user.auth_hash = str(user_dict)
+                user.auth_hash = f'Bearer {token}'
                 user.save()
-                return dict(access_token=token), 200
+                return dict(access_token=f'Bearer {token}'), 200
         else:
             return {'user': 'Please enter username and password'}
 
-    @validate_blacklist
     @jwt_required
+    @validate_blacklist
     def get(self):
         identity = get_jwt_identity()
         id = dict(name=identity['usn'], type=identity['type'])
@@ -167,8 +166,8 @@ class UserAuthLogout(User):
     def __init__(self):
         User.__init__(self)
 
-    @validate_blacklist
     @jwt_required
+    @validate_blacklist
     def post(self):
         identity = get_jwt_identity()
         user_identity = identity.get('usn')
@@ -184,6 +183,8 @@ class UserAuthLogout(User):
             blacklist = BlackListToken(data=old_hash)
             blacklist.save()
             user.auth_hash = None
+            user.save()
+            return dict(user=f'Logged out {user.name}')
 
 
 api.add_resource(UserAPI, '/user', '/user/<string:facility>')

@@ -47,6 +47,7 @@ class userData(db.Model):
             facility=facilityData.query.filter(facilityData.id == self.facility_id).first().__repr__()
         ), 201
 
+
 class barcodeData(db.Model):
     __tablename__ = 'barcodes'
 
@@ -94,7 +95,7 @@ class MedstationData(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     station_name = db.Column(db.String(128), nullable=False)
 
-    inventory_data = db.relationship('InventoryData', backref='medstation')
+    inventory_data = db.relationship('InventoryData', backref='medstation', cascade="all, delete, delete-orphan")
     facility_id = db.Column(db.Integer, db.ForeignKey('facility.id'), nullable=True)
 
     def __init__(self, data: typing.Dict['str', 'str']) -> None:
@@ -115,7 +116,6 @@ class MedstationData(db.Model):
     def _asdict(self):
         output = dict(
             station_name=self.station_name,
-            devices=[device._asdict() for device in self.device_data]
         )
 
 
@@ -179,8 +179,8 @@ class facilityData(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     facility_name = db.Column(db.String(128), nullable=False)
 
-    stations = db.relationship('MedstationData', backref='facility', lazy=True)
-    users = db.relationship('userData', backref='facility', lazy=True)
+    stations = db.relationship('MedstationData', backref='facility', lazy=True, cascade="all, delete, delete-orphan")
+    users = db.relationship('userData', backref='facility', lazy=True, cascade="all, delete, delete-orphan")
 
     def __init__(self, data) -> None:
         '''class constructor'''
@@ -202,13 +202,12 @@ class facilityData(db.Model):
         return dict(
             id=self.id,
             facility_name=self.facility_name,
-            users=[user._asdict() for user in self.users]
+            users=[user._asdict() for user in self.users],
+            stations=[station._asdict() for station in self.stations]
         )
 
     def __repr__(self) -> str:
         return "{}".format(self.facility_name)
-
-
 
 
 class BlackListToken(db.Model):
@@ -230,8 +229,14 @@ class BlackListToken(db.Model):
 
     @staticmethod
     def validate_blacklist(hash):
-        blacklist = BlackListToken.query.filter(BlackListToken.hash == str(hash)).first()
+        blacklist = BlackListToken.query.filter(BlackListToken.hash == hash).first()
         if blacklist is None:
+            '''
+            token isn't in blacklist
+            '''
             return True
         else:
+            '''
+            token is in blacklist
+            '''
             return False

@@ -7,6 +7,17 @@ from .users import validate_blacklist
 api_bp_facility = Blueprint('facility_api', __name__)
 api = Api(api_bp_facility)
 
+def validate_facility(facility_name=None):
+    if facility_name is None:
+        return dict(error='Facility name required')
+    elif facility_name is not None:
+        facility_obj:facilityData = facilityData.query.filter(facilityData.facility_name == facility_name).first()
+        if facility_obj is None:
+            return dict(error=f'Facility {facility_name} is not valid'), 400
+        else:
+            return facility_obj
+
+
 class FacilityResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
@@ -43,6 +54,8 @@ class Facility(FacilityResource):
         FacilityResource.__init__(self)
         self.facility_name = self.get_facility()
 
+    @jwt_required
+    @validate_blacklist
     def get(self, facilityname=None):
         if facilityname is None:
             return {
@@ -54,8 +67,8 @@ class Facility(FacilityResource):
         else:
             return {"facility" : "facility not found"},201
 
-    @validate_blacklist
     @jwt_required
+    @validate_blacklist
     def put(self, facilityname=None):
         if facilityname is not None:
             return {"response" : "method not allowed"}, 401
@@ -73,8 +86,8 @@ class Facility(FacilityResource):
                 "facility" : "Cannot create facility, it is a duplicate"
             }, 201
 
-    @validate_blacklist
     @jwt_required
+    @validate_blacklist
     def delete(self, facilityname=None):
         if facilityname is not None:
             return {"response" : "method not allowed"}, 401
@@ -91,4 +104,4 @@ class Facility(FacilityResource):
 
 
 api.add_resource(FacilityList, '/facilities/all')
-api.add_resource(Facility, '/facility', '/facility/<facilityname>')
+api.add_resource(Facility, '/facility', '/facility/<string:facilityname>')
