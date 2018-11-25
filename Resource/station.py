@@ -3,7 +3,7 @@ from models import MedstationData, facilityData
 from flask import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from .facility import validate_facility
-from .users import validate_blacklist
+from .users import validate_blacklist, admin_required
 
 api_bp_station = Blueprint('station_api', __name__)
 api = Api(api_bp_station)
@@ -49,6 +49,7 @@ class StationList(StationResource):
         return facility_to_return._asdict(), 201
 
     @jwt_required
+    @admin_required
     @validate_blacklist
     def put(self, facility=None):
         identity = get_jwt_identity()
@@ -67,6 +68,7 @@ class StationList(StationResource):
                 station=f'Station {station_name} is not unique for facility {facility_to_return.facility_name}'), 200
 
     @jwt_required
+    @admin_required
     @validate_blacklist
     def delete(self, facility=None):
         identity = get_jwt_identity()

@@ -2,7 +2,7 @@ from flask_restful import Resource, Api, reqparse
 from models import barcodeData
 from flask import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .users import validate_blacklist
+from .users import validate_blacklist, admin_required
 
 api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
@@ -11,7 +11,6 @@ api = Api(api_bp)
 parser = reqparse.RequestParser()
 parser.add_argument('barcode', type=str)
 parser.add_argument('medid', type=str)
-parser.add_argument('user', type=str)
 
 
 class BarcodeAPI(Resource):
@@ -21,8 +20,9 @@ class BarcodeAPI(Resource):
         output = [item._asdict() for item in items]
         return {'barcodes':output}, 201
 
-    @validate_blacklist
     @jwt_required
+    @admin_required
+    @validate_blacklist
     def put(self, id):
         data = parser.parse_args()
         #todo need to add code for querying barcodes

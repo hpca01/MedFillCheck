@@ -2,12 +2,13 @@ from flask_restful import Resource, Api, reqparse
 from models import facilityData
 from flask import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .users import validate_blacklist
+from .users import validate_blacklist, admin_required
 
 api_bp_facility = Blueprint('facility_api', __name__)
 api = Api(api_bp_facility)
 
 def validate_facility(facility_name=None):
+    '''checks to see if the facility is valid and returns it if it is'''
     if facility_name is None:
         return dict(error='Facility name required')
     elif facility_name is not None:
@@ -68,6 +69,7 @@ class Facility(FacilityResource):
             return {"facility" : "facility not found"},201
 
     @jwt_required
+    @admin_required
     @validate_blacklist
     def put(self, facilityname=None):
         if facilityname is not None:
@@ -87,6 +89,7 @@ class Facility(FacilityResource):
             }, 201
 
     @jwt_required
+    @admin_required
     @validate_blacklist
     def delete(self, facilityname=None):
         if facilityname is not None:

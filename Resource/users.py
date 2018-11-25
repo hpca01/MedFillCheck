@@ -24,6 +24,21 @@ def validate_blacklist(func):
             return dict(response='Authorization Token Needed'), 501
     return wrapper
 
+def admin_required(func):
+    '''
+    decorator for validating admin before processing request
+    :param func: resource func
+    :return: callable function only if user is admin otherwise an error
+    '''
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if 'Authorization' in request.headers:
+            identity=get_jwt_identity()
+            if identity.get('type') == "admin":
+                return func(self, *args,**kwargs)
+            else:
+                return dict(user=f'User {identity["usn"]} is not an admin'), 201
+    return wrapper
 
 class User(Resource):
     def __init__(self):
@@ -50,25 +65,9 @@ class UserAPI(User):
     def __init__(self):
         User.__init__(self)
 
-    def post(self, facility=None):
-        '''
-        return non-importaant info about user-
-        :param facility: - assumes request is facility independent
-        :return: - whether or not user exists
-        '''
-        data = self.parser.parse_args()
-        name = (data['name'])
-        query_user = userData.query.filter(userData.name == name).first()
-        if query_user is not None:
-            # if not valid request
-            user_data = query_user._asdict()
-            return user_data,  202
-        elif query_user is None:
-            return {
-                       'user': 'Not found, please sign up'
-                   }, 204
-
     @jwt_required
+    @admin_required
+    @validate_blacklist
     def put(self, facility=None):
         '''
         create useres-using the put function
@@ -76,8 +75,6 @@ class UserAPI(User):
         :return:
         '''
         identity = get_jwt_identity()
-        if identity.get('type') != "admin":
-            return {'message': "You do not have access to create a user"}, 500
         data = self.parser.parse_args()
         name, password, type = (data.get('name'), data.get('password'), data.get('type'))
         if facility is not None and ((name and password and type) is not None):
@@ -95,10 +92,10 @@ class UserAPI(User):
                    }, 204
 
     @jwt_required
+    @admin_required
+    @validate_blacklist
     def delete(self, facility=None):
         identity = get_jwt_identity()
-        if identity.get('type') != "admin":
-            return {'message': "You do not have access to delete a user"}, 500
         data = self.parser.parse_args()
         name, password, type = (data.get('name'), data.get('password'), data.get('type'))
         user_to_delete = userData.query.filter(userData.name == name).first()

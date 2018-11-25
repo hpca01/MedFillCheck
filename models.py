@@ -117,6 +117,14 @@ class MedstationData(db.Model):
         output = dict(
             station_name=self.station_name,
         )
+        return output
+
+    def _refill_list_as_dict(self):
+        output = dict(
+            station_name=self.station_name,
+            refill_list = [refilldata._asdict() for refilldata in self.inventory_data]
+        )
+        return output
 
 
 class InventoryData(db.Model):
@@ -145,7 +153,6 @@ class InventoryData(db.Model):
         self.current = data.get('current')
         self.pick_amount = data.get('pick_amount')
         self.checked = False
-        ##self.pulled_by to be added
         self.entry_date = datetime.datetime.now()
 
     def save(self):
