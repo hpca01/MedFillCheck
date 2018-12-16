@@ -1,23 +1,53 @@
 from flask_restful import Resource, Api, reqparse
 from models import facilityData
 from flask import Blueprint
+from functools import wraps, partial
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from .users import validate_blacklist, admin_required
 
 api_bp_facility = Blueprint('facility_api', __name__)
 api = Api(api_bp_facility)
+class NullFacilityException(Exception):
+    '''Exception that is raised when facility is invalid'''
+    def __init__(self, message, payload=None):
+        self.message=message
+        self.payload=payload
+    def __str__(self):
+        return str(self.message)
+
+class InvalidFacilityException(Exception):
+    '''Exception that is raised when facility is invalid'''
+    def __init__(self, message, payload=None):
+        self.message=message
+        self.payload=payload
+    def __str__(self):
+        return str(self.message)
 
 def validate_facility(facility_name=None):
-    '''checks to see if the facility is valid and returns it if it is'''
+    '''checks to see if the facility is valid and returns it if it is otherwise returns false'''
     if facility_name is None:
-        return dict(error='Facility name required')
+        raise NullFacilityException("Facility cannot be none")
     elif facility_name is not None:
         facility_obj:facilityData = facilityData.query.filter(facilityData.facility_name == facility_name).first()
         if facility_obj is None:
-            return dict(error=f'Facility {facility_name} is not valid'), 400
+            raise InvalidFacilityException("Invalid facility")
         else:
             return facility_obj
 
+def facility_validation_wrapper(func):
+    @wraps(func)
+    def run(*args, **kwargs):
+        facility:str = kwargs.get("facility")
+        if facility is None:
+            return dict(error=f"Facility cannot be none for this function")
+        else:
+            facility_obj: facilityData = facilityData.query.filter(facilityData.facility_name == facility).first()
+            if facility_obj is None:
+                return dict(error=f'Facility {facility} does not exist in db, please contact admin')
+            else:
+                kwargs['facility_ob'] = facility_obj
+                return partial(func, args, kwargs)
+    return run
 
 class FacilityResource(Resource):
     def __init__(self):
