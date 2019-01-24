@@ -23,12 +23,12 @@ class InvalidFacilityException(Exception):
     def __str__(self):
         return str(self.message)
 
-def validate_facility(facility_name=None):
+def validate_facility(facility_Name=None):
     '''checks to see if the facility is valid and returns it if it is otherwise returns false'''
-    if facility_name is None:
+    if facility_Name is None:
         raise NullFacilityException("Facility cannot be none")
-    elif facility_name is not None:
-        facility_obj:facilityData = facilityData.query.filter(facilityData.facility_name == facility_name).first()
+    elif facility_Name is not None:
+        facility_obj:facilityData = facilityData.query.filter(facilityData.facility_name == str(facility_Name)).first()
         if facility_obj is None:
             raise InvalidFacilityException("Invalid facility")
         else:

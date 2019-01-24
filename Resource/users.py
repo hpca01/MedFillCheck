@@ -115,11 +115,11 @@ class UsersList(User):
 
     def get(self, facility=None):
         if facility is None:
-            # todo need to add code for looking up user and responding with facility
             users_list = userData.query.all()
             return dict(users=[user._asdict() for user in users_list]), 201
 
         elif facility:
+            print(facility)
             _facility = facilityData.query.filter(facilityData.facility_name == facility).first()
             if facility is None:
                 return dict(
@@ -128,7 +128,7 @@ class UsersList(User):
             else:
                 users_list = _facility.users
                 return dict(
-                    users=[user._asdict for user in users_list]
+                    users=[user._asdict() for user in users_list]
                 ), 201
 
 

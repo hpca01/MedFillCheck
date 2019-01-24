@@ -2,7 +2,7 @@ from flask_restful import Resource, Api, reqparse
 from models import MedstationData, facilityData
 from flask import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .facility import validate_facility
+from .facility import validate_facility, NullFacilityException, InvalidFacilityException
 from .users import validate_blacklist, admin_required
 
 api_bp_station = Blueprint('station_api', __name__)
@@ -45,7 +45,12 @@ class StationList(StationResource):
         StationResource.__init__(self)
 
     def get(self, facility=None):
-        facility_to_return: facilityData = validate_facility(facility)
+        try:
+            facility_to_return: facilityData = validate_facility(facility)
+        except NullFacilityException:
+            return dict(error='Facility cannot be none'), 400
+        except InvalidFacilityException as e:
+            return dict(error=e.message), 400
         return facility_to_return._asdict(), 201
 
     @jwt_required
@@ -55,7 +60,12 @@ class StationList(StationResource):
         identity = get_jwt_identity()
         if identity['type'] != 'admin':
             return dict(station='You do not have admin privileges'), 400
-        facility_to_return: facilityData = validate_facility(facility)
+        try:
+            facility_to_return: facilityData = validate_facility(facility)
+        except NullFacilityException:
+            return dict(error=f'Facility cannot be none'), 400
+        except InvalidFacilityException as e:
+            return dict(error=e.message), 400
         data = self.get_station()
         station_name = data.get('station_name', None)
         if check_station_unique(station_name):
@@ -74,7 +84,12 @@ class StationList(StationResource):
         identity = get_jwt_identity()
         if identity['type'] != 'admin':
             return dict(station='You do not have admin privileges'),401
-        facility_to_return: facilityData = validate_facility(facility)
+        try:
+            facility_to_return: facilityData = validate_facility(facility)
+        except NullFacilityException:
+            return dict(error='Facility cannot be none'), 400
+        except InvalidFacilityException as e:
+            return dict(error=e.message), 400
         data = self.get_station()
         station_name = data.get('station_name', None)
         if check_station_unique(station_name):

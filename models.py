@@ -3,15 +3,15 @@ import datetime
 import typing
 
 
-# todo need to review the new structure - > user->facility->station->inventory
-# todo barcode->user
+# todo need to review the new structure - > user->facility->station->inventory -- DONE
+# todo barcode->user -- DONE
 
 class userData(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(123), nullable=False)
-    # TODO need to add hash encyrption
+    # TODO need to add hashing for the password
     password = db.Column(db.String(10), nullable=False)
     type = db.Column(db.String(5), nullable=False)
 
@@ -23,6 +23,14 @@ class userData(db.Model):
         self.password = data.get('password')
         self.type = data.get('type')
         self.facility_id = data.get('facility_id')
+
+    def __getattr__(self, item):
+        if item is 'facility':
+            facility = facilityData.query.filter(facilityData.id == self.facility_id).first()
+            if facility is None:
+                return "No Facility Found"
+            else:
+                return facility.facility_name
 
     def save(self):
         db.session.add(self)
@@ -44,8 +52,8 @@ class userData(db.Model):
             id=self.id,
             name=self.name,
             type=self.type,
-            facility=facilityData.query.filter(facilityData.id == self.facility_id).first().__repr__()
-        ), 201
+            facility_id=self.__getattr__('facility')
+        )
 
 
 class barcodeData(db.Model):
@@ -120,9 +128,11 @@ class MedstationData(db.Model):
         return output
 
     def _refill_list_as_dict(self):
+        #todo filter list by checked is false--DONE
+
         output = dict(
             station_name=self.station_name,
-            refill_list = [refilldata._asdict() for refilldata in self.inventory_data]
+            refill_list=[refilldata._asdict_refill() for refilldata in self.inventory_data]
         )
         return output
 
@@ -167,7 +177,12 @@ class InventoryData(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-    def __asdict(self):
+    def _asdict_refill(self):
+        if self.checked is not True:
+            return self._asdict()
+
+
+    def _asdict(self):
         dict_return = dict(
             med_description=self.med_description,
             medid=self.medid,
@@ -176,8 +191,9 @@ class InventoryData(db.Model):
             current=self.current,
             pick_amount=self.pick_amount,
             checked=str(self.checked),
-            entry_date=self.entry_date.__repr__(),
+            entry_date=self.entry_date.isoformat(' ', 'seconds'),
         )
+        return dict_return
 
 
 class facilityData(db.Model):
