@@ -1,6 +1,6 @@
 
 from models import *
-from app import app
+import app
 from extensions import db
 
 

@@ -83,9 +83,9 @@ class UserAPI(User):
             else:
                 facility_ref = facilityData.query.filter(facilityData.facility_name == facility).first()
                 data['facility_id'] = facility_ref.id
-                new_user = userData(data)
+                new_user = userData(**data)
                 new_user.save()
-                return {'user': f'Created {new_user.get(name)}'}, 201
+                return {'user': f'Created {new_user.name}'}, 201
         elif facility is None:
             return {
                        'error': 'Missing arguments, needs facility, name, password, and type'

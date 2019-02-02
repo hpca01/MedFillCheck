@@ -1,6 +1,9 @@
 alembic==1.0.0
 aniso8601==3.0.2
+appdirs==1.4.3
+attrs==18.2.0
 bcrypt==3.1.4
+black==18.9b0
 botocore==1.12.9
 cffi==1.11.5
 click==6.7
@@ -11,6 +14,7 @@ Flask-JWT-Extended==3.13.1
 flask-marshmallow==0.9.0
 Flask-Migrate==2.2.1
 Flask-RESTful==0.3.6
+Flask-Script==2.0.6
 Flask-SQLAlchemy==2.3.2
 gunicorn==19.9.0
 itsdangerous==0.24
@@ -20,6 +24,8 @@ Mako==1.0.7
 MarkupSafe==1.0
 marshmallow==2.15.6
 marshmallow-sqlalchemy==0.14.1
+mypy==0.641
+mypy-extensions==0.4.1
 numpy==1.15.2
 pandas==0.23.4
 passlib==1.7.1
@@ -34,9 +40,10 @@ python-editor==1.0.3
 pytz==2018.5
 s3transfer==0.1.13
 six==1.11.0
-SQLAlchemy==1.2.12
+SQLAlchemy==1.2.17
 toml==0.10.0
 tox==3.4.0
+typed-ast==1.1.0
 urllib3==1.23
 virtualenv==16.0.0
 Werkzeug==0.14.1

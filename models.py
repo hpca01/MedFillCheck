@@ -10,27 +10,23 @@ class userData(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(123), nullable=False)
-    # TODO need to add hashing for the password
+    name = db.Column(db.String(128), nullable=False)
     password = db.Column(db.String(10), nullable=False)
     type = db.Column(db.String(5), nullable=False)
 
     facility_id = db.Column(db.Integer, db.ForeignKey('facility.id'), nullable=True)
     auth_hash = db.Column(db.String, nullable=True)
 
-    def __init__(self, data) -> None:
-        self.name = data.get('name')
-        self.password = data.get('password')
-        self.type = data.get('type')
-        self.facility_id = data.get('facility_id')
+    def __init__(self, *args, **kwargs) -> None:
+        super(userData, self).__init__(*args, **kwargs)
 
-    def __getattr__(self, item):
-        if item is 'facility':
-            facility = facilityData.query.filter(facilityData.id == self.facility_id).first()
-            if facility is None:
-                return "No Facility Found"
-            else:
-                return facility.facility_name
+    @property
+    def facility(self)->str:
+        facility = facilityData.query.filter(facilityData.id == self.facility_id).first()
+        if facility is None:
+            return "No Facility Found"
+        else:
+            return facility.facility_name
 
     def save(self):
         db.session.add(self)
@@ -52,7 +48,7 @@ class userData(db.Model):
             id=self.id,
             name=self.name,
             type=self.type,
-            facility_id=self.__getattr__('facility')
+            facility_id=self.facility
         )
 
 
