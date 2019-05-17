@@ -119,7 +119,6 @@ class UsersList(User):
             return dict(users=[user._asdict() for user in users_list]), 201
 
         elif facility:
-            print(facility)
             _facility = facilityData.query.filter(facilityData.facility_name == facility).first()
             if facility is None:
                 return dict(

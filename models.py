@@ -48,7 +48,7 @@ class userData(db.Model):
             id=self.id,
             name=self.name,
             type=self.type,
-            facility_id=self.facility
+            facility_id=self.facility.facility_name
         )
 
 
