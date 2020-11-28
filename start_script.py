@@ -6,7 +6,8 @@ from extensions import db
 
 def create_admin():
     '''
-    create facility then create a user.
+    for testing purposes only
+    create facility then create a user
     :return:
     '''
     with app.app_context():
